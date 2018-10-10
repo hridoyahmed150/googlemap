@@ -2,6 +2,7 @@
 	let map,marker,customMapType,marker_create=[];
 	let directionsService = new google.maps.DirectionsService;
   let directionsDisplay = new google.maps.DirectionsRenderer;
+  let service = new google.maps.DistanceMatrixService();
 	let style=[
   {
     featureType: "all",
@@ -32,10 +33,19 @@
       zoom: 10,
       styles: style
     });
+    var image = {
+      url: 'marker/bluemapicon.png',
+      // This marker is 50 pixels wide by 50 pixels high.
+      size: new google.maps.Size(50, 50) 
+    };
     marker=new google.maps.Marker({
     	position: mylatlng,
     	map: map,
-    	title:'first step'
+    	title:'first step',
+      icon: {
+          url:'marker/bluemapicon.png',
+          scaledSize: new google.maps.Size(35, 50)
+        }
     })
 
   }
@@ -87,7 +97,22 @@
         }, function(response, status) {
           if (status === 'OK') {
             directionsDisplay.setDirections(response);
-            console.log(response);
+            service.getDistanceMatrix(
+            {
+              origins: [marker.getPosition()],
+              destinations: [pos],
+              travelMode: 'DRIVING',
+              travelMode: 'DRIVING',
+              unitSystem: google.maps.UnitSystem.METRIC,
+              avoidHighways: false,
+              avoidTolls: false
+            }, callback);
+
+          function callback(response, status) {
+            // See Parsing the Results for
+            // the basics of a callback function.
+            console.log(response.rows[0].elements[0].distance.text);
+          }
           } else {
             window.alert('Directions request failed due to ' + status);
           }
