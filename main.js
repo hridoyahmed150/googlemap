@@ -4,25 +4,45 @@
   let directionsDisplay = new google.maps.DirectionsRenderer;
   let service = new google.maps.DistanceMatrixService();
 	let style=[
-  {
-    featureType: "all",
-    stylers: [
-      { saturation: -80 }
-    ]
-  },{
-    featureType: "road.arterial",
-    elementType: "geometry",
-    stylers: [
-      { hue: "#00ffee" },
-      { saturation: 50 }
-    ]
-  },{
-    featureType: "poi.business",
-    elementType: "labels",
-    stylers: [
-      { visibility: "off" }
-    ]
-  }
+    {
+        "featureType": "all",
+        "elementType": "geometry.stroke",
+        "stylers": [
+            {
+                "color": "#10f900"
+            }
+        ]
+    },
+    {
+        "featureType": "landscape.natural",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#c7ead4"
+            }
+        ]
+    },
+    {
+        "featureType": "landscape.natural.terrain",
+        "elementType": "all",
+        "stylers": [
+            {
+                "saturation": "60"
+            }
+        ]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#aaafe4"
+            },
+            {
+                "saturation": "88"
+            }
+        ]
+    }
 ];
 	let mapdiv=document.getElementById('map');
 	let mylatlng=new google.maps.LatLng(23.8103,90.4125);
@@ -30,14 +50,10 @@
 	function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
       center: mylatlng,
-      zoom: 10,
+      zoom: 12,
       styles: style
     });
-    var image = {
-      url: 'marker/bluemapicon.png',
-      // This marker is 50 pixels wide by 50 pixels high.
-      size: new google.maps.Size(50, 50) 
-    };
+    
     marker=new google.maps.Marker({
     	position: mylatlng,
     	map: map,
@@ -74,7 +90,7 @@
   ];
   function getNewMarker(){
   	for (var i = markers.length - 1; i >= 0; i--) {
-  		let item=createMarkers(markers[i]);
+  		createMarkers(markers[i]);
   		marker_create.push(createMarkers);
   	}
   }
@@ -84,15 +100,16 @@
     	map: map,
     });
     newmarker.addListener('click',function(){
-  		calculateAndDisplayRoute(pos)
+  		calculateAndDisplayRoute(pos);
   	});
   }
   // console.log(marker.getPositiion());
   function calculateAndDisplayRoute(pos) {
+    let position=pos;
   	directionsDisplay.setMap(map);
         directionsService.route({
           origin: marker.getPosition(),
-          destination: pos,
+          destination: position,
           travelMode: 'DRIVING'
         }, function(response, status) {
           if (status === 'OK') {
@@ -102,17 +119,27 @@
               origins: [marker.getPosition()],
               destinations: [pos],
               travelMode: 'DRIVING',
-              travelMode: 'DRIVING',
               unitSystem: google.maps.UnitSystem.METRIC,
               avoidHighways: false,
               avoidTolls: false
             }, callback);
 
           function callback(response, status) {
-            // See Parsing the Results for
-            // the basics of a callback function.
-            console.log(response.rows[0].elements[0].distance.text);
-          }
+            if (status=='OK') {
+              var infowindow = new google.maps.InfoWindow();
+              infowindow.setContent("<div class='informationbox'><h2>"+ response.destinationAddresses+"</h2>"+
+                "<p>distance : <strong>"+ response.rows[0].elements[0].distance.text+"</strong></p>"+
+                "<p>duration : <strong>"+ response.rows[0].elements[0].duration.text+"</strong></p>"+
+                "</div>"
+                );
+                infowindow.setPosition(pos);
+                infowindow.open(map); 
+                google.maps.event.addListener(map, 'click', function() {
+                    infowindow.close();
+                    marker.open = false;
+                });      
+              } 
+            }
           } else {
             window.alert('Directions request failed due to ' + status);
           }
